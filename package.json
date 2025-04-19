@@ -1,0 +1,25 @@
+{
+    "name": "x-post-manager",
+    "version": "1.0.0",
+    "description": "X Post Manager - Schedule and manage your X posts",
+    "main": "index.js",
+    "scripts": {
+        "start": "node server/server.js",
+        "server": "cd server && npm run dev",
+        "client": "cd client && npm run dev",
+        "dev": "concurrently \"npm run server\" \"npm run client\"",
+        "install-all": "npm install && cd client && npm install && cd ../server && npm install"
+    },
+    "keywords": [
+        "twitter",
+        "x",
+        "social",
+        "media",
+        "scheduler"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "concurrently": "^8.2.2"
+    }
+}
