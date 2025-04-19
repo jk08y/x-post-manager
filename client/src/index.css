@@ -158,4 +158,29 @@
   .content-wrapper {
     @apply ml-0 md:ml-64 transition-all duration-300;
   }
+  
+  /* Mobile bottom navbar */
+  .mobile-nav-item {
+    @apply flex flex-col items-center justify-center w-full h-full transition-colors duration-200;
+  }
+  
+  .mobile-nav-item.active {
+    @apply text-twitter-blue;
+  }
+  
+  .mobile-nav-item:not(.active) {
+    @apply text-gray-500 dark:text-gray-400;
+  }
+  
+  .mobile-nav-icon {
+    @apply text-xl mb-1;
+  }
+  
+  .mobile-nav-label {
+    @apply text-xs;
+  }
+  
+  .mobile-nav-post-button {
+    @apply bg-twitter-blue text-white p-2 rounded-full shadow-md transform transition-transform duration-200 hover:scale-110;
+  }
 }

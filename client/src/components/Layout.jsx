@@ -5,6 +5,7 @@ import { FaCalendarAlt, FaListAlt, FaClock, FaHome, FaBars, FaTimes, FaUser, FaL
 import { RiTwitterXFill } from 'react-icons/ri';
 import { useTheme } from '../hooks/useTheme';
 import ThemeToggle from './ThemeToggle';
+import MobileNavBar from './MobileNavBar';
 
 const Layout = () => {
   const { darkMode } = useTheme();
@@ -117,11 +118,14 @@ const Layout = () => {
       </aside>
       
       {/* Main Content */}
-      <main className="content-wrapper flex-grow bg-gray-50 dark:bg-twitter-dark min-h-screen pt-16 md:pt-0">
+      <main className="content-wrapper flex-grow bg-gray-50 dark:bg-twitter-dark min-h-screen pt-16 md:pt-0 pb-16 md:pb-0">
         <div className="container mx-auto p-4 md:p-6 max-w-5xl">
           <Outlet />
         </div>
       </main>
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileNavBar />
     </div>
   );
 };

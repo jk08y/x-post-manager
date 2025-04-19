@@ -1,5 +1,6 @@
 // client/src/components/ThemeToggle.jsx
-import { FaSun, FaMoon } from 'react-icons/fa';
+import { FaMoon } from 'react-icons/fa';
+import { BsSunFill } from 'react-icons/bs';
 import { Switch } from '@headlessui/react';
 import { useTheme } from '../hooks/useTheme';
 
@@ -10,7 +11,7 @@ const ThemeToggle = () => {
     <div className="flex items-center justify-between w-full p-3 rounded-full hover:bg-gray-100 dark:hover:bg-twitter-dark transition-colors">
       <span className="flex items-center">
         {darkMode ? (
-          <FaSun className="mr-3 text-xl text-yellow-400" />
+          <BsSunFill className="mr-3 text-xl text-yellow-400" />
         ) : (
           <FaMoon className="mr-3 text-xl text-gray-600" />
         )}
