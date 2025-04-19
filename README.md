@@ -1,6 +1,6 @@
 # X Post Manager
 
-A express app for scheduling and managing your X (formerly Twitter) posts responsive UI & powerful features.
+React/express webapp for scheduling and managing your X (formerly Twitter) posts with responsive UI & powerful features.
 
 
 ## Features
