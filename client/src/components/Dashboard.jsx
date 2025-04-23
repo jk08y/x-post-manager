@@ -43,20 +43,70 @@ const Dashboard = () => {
   // Create a new post
   const createPost = async (postData) => {
     try {
-      // If post is scheduled, use schedule endpoint
-      let endpoint = postData.scheduled ? `${API_URL}/posts/schedule` : `${API_URL}/posts`;
+      setLoading(true);
       
-      // Prepare the data for API call
-      const apiData = postData.scheduled 
-        ? { 
-            text: postData.text, 
-            scheduledTime: postData.scheduledTime,
-            cronExpression: postData.cronExpression,
-            cronDescription: postData.cronDescription
+      // Prepare form data for file uploads if there's media
+      const hasMedia = postData.media && postData.media.length > 0;
+      
+      let endpoint, requestData;
+      
+      // Determine endpoint based on scheduling
+      endpoint = postData.scheduled ? `${API_URL}/posts/schedule` : `${API_URL}/posts`;
+      
+      if (hasMedia) {
+        // Use FormData for media uploads
+        const formData = new FormData();
+        
+        // Add text content
+        formData.append('text', postData.text);
+        
+        // Add scheduling info if needed
+        if (postData.scheduled) {
+          formData.append('scheduledTime', postData.scheduledTime);
+          
+          if (postData.cronExpression) {
+            formData.append('cronExpression', postData.cronExpression);
+            formData.append('cronDescription', postData.cronDescription);
           }
-        : { text: postData.text };
+        }
+        
+        // Add thread info if this is a thread
+        if (postData.isThread) {
+          formData.append('isThread', true);
+          
+          // Add thread posts
+          if (postData.threadPosts && postData.threadPosts.length > 0) {
+            formData.append('threadPosts', JSON.stringify(postData.threadPosts));
+          }
+        }
+        
+        // Add main post media files
+        for (const mediaFile of postData.media) {
+          formData.append('media', mediaFile.file);
+        }
+        
+        // Use formData as the request payload
+        requestData = formData;
+      } else {
+        // No media, use JSON
+        requestData = {
+          text: postData.text,
+          isThread: postData.isThread || false,
+          threadPosts: postData.threadPosts || [],
+          scheduledTime: postData.scheduled ? postData.scheduledTime : null,
+          cronExpression: (postData.scheduled && postData.cronExpression) ? postData.cronExpression : null,
+          cronDescription: (postData.scheduled && postData.cronDescription) ? postData.cronDescription : null
+        };
+      }
       
-      await axios.post(endpoint, apiData);
+      // Send the request
+      const response = await axios.post(endpoint, requestData, {
+        headers: hasMedia ? {
+          'Content-Type': 'multipart/form-data'
+        } : {
+          'Content-Type': 'application/json'
+        }
+      });
       
       toast.success(postData.scheduled 
         ? 'Post scheduled successfully!' 
@@ -67,6 +117,8 @@ const Dashboard = () => {
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to create post. Please try again.');
       console.error('Error creating post:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -133,6 +185,7 @@ const Dashboard = () => {
         <div>
           {loading ? (
             <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+              <FaSync className="animate-spin mx-auto mb-3 text-twitter-blue" />
               Loading posts...
             </div>
           ) : error ? (

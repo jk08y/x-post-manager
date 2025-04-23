@@ -1,35 +1,78 @@
 // client/src/components/Layout.jsx
 import { useState, useEffect } from 'react';
-import { Outlet, NavLink, Link } from 'react-router-dom';
-import { FaCalendarAlt, FaListAlt, FaClock, FaHome, FaBars, FaTimes, FaUser, FaLightbulb } from 'react-icons/fa';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { FaCalendarAlt, FaClock, FaHome, FaUser, FaSignOutAlt } from 'react-icons/fa';
 import { RiTwitterXFill } from 'react-icons/ri';
-import { useTheme } from '../hooks/useTheme';
-import ThemeToggle from './ThemeToggle';
-import MobileNavBar from './MobileNavBar';
+import { useTheme } from '../hooks/useTheme.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import MobileNavBar from './MobileNavBar.jsx';
+import Header from './Header.jsx';
+import Footer from './Footer.jsx';
 
 const Layout = () => {
   const { darkMode } = useTheme();
+  const { currentUser, getUserProfile, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [hideOnScroll, setHideOnScroll] = useState(false);
+  const navigate = useNavigate();
+  
+  // Get user profile data
+  const userProfile = getUserProfile();
+  
+  // Function to get user initials
+  const getUserInitials = () => {
+    if (!userProfile) return '';
+    
+    if (userProfile.displayName) {
+      return userProfile.displayName
+        .split(' ')
+        .map(name => name[0])
+        .join('')
+        .toUpperCase();
+    }
+    
+    return userProfile.email.charAt(0).toUpperCase();
+  };
+  
+  // Handle user logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
-  // Handle scroll for mobile - hide navbar on scroll down, show on scroll up
+  // Toggle mobile menu
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  // Close mobile menu when clicking outside or when route changes
   useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+    const handleClickOutside = (event) => {
+      const sidebar = document.getElementById('mobile-sidebar');
+      const toggleButton = document.getElementById('mobile-toggle');
       
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setHideOnScroll(true);
-      } else {
-        setHideOnScroll(false);
+      if (mobileMenuOpen && sidebar && !sidebar.contains(event.target) && toggleButton && !toggleButton.contains(event.target)) {
+        setMobileMenuOpen(false);
       }
-      
-      setLastScrollY(currentScrollY);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    // Close menu when URL changes
+    const handleRouteChange = () => {
+      setMobileMenuOpen(false);
+    };
+    
+    window.addEventListener('popstate', handleRouteChange);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('popstate', handleRouteChange);
+    };
+  }, [mobileMenuOpen]);
 
   // Navigation items
   const navItems = [
@@ -40,38 +83,24 @@ const Layout = () => {
 
   return (
     <div className={`min-h-screen flex flex-col ${darkMode ? 'dark' : ''}`}>
-      {/* Mobile Header - Fixed on top for mobile */}
-      <header className={`md:hidden fixed top-0 left-0 right-0 z-20 bg-white dark:bg-twitter-darker border-b border-gray-200 dark:border-twitter-border transition-transform duration-300 ${hideOnScroll ? '-translate-y-full' : 'translate-y-0'}`}>
-        <div className="flex items-center justify-between px-4 py-3">
-          <button 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-gray-700 dark:text-gray-200 focus:outline-none"
-          >
-            {mobileMenuOpen ? (
-              <FaTimes className="h-6 w-6" />
-            ) : (
-              <FaBars className="h-6 w-6" />
-            )}
-          </button>
-          
-          <Link to="/" className="flex items-center">
-            <RiTwitterXFill className="text-twitter-blue text-2xl mr-2" />
-            <span className="text-lg font-bold text-twitter-lightText dark:text-twitter-darkText">X Post Manager</span>
-          </Link>
-          
-          <div className="w-6 h-6"></div> {/* Empty space for balanced header */}
-        </div>
-      </header>
+      {/* Header - Fixed at top */}
+      <Header toggleMobileMenu={toggleMobileMenu} mobileMenuOpen={mobileMenuOpen} />
 
       {/* Mobile Menu Overlay */}
-      <div className={`md:hidden fixed inset-0 z-10 bg-black bg-opacity-50 transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        onClick={() => setMobileMenuOpen(false)}>
-      </div>
+      <div 
+        className={`md:hidden fixed inset-0 z-20 bg-black bg-opacity-50 transition-opacity duration-300 ${
+          mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setMobileMenuOpen(false)}
+      />
 
       {/* Sidebar Navigation - Fixed position */}
-      <aside className={`navbar-fixed bg-white dark:bg-twitter-darker border-r border-gray-200 dark:border-twitter-border
-        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-        <div className="navbar-content flex flex-col">
+      <aside 
+        id="mobile-sidebar"
+        className={`navbar-fixed bg-white dark:bg-twitter-darker border-r border-gray-200 dark:border-twitter-border
+          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+      >
+        <div className="navbar-content">
           {/* Logo */}
           <div className="logo-container border-b border-gray-200 dark:border-twitter-border mb-2">
             <RiTwitterXFill className="logo" />
@@ -79,7 +108,7 @@ const Layout = () => {
           </div>
           
           {/* Navigation */}
-          <nav className="flex-grow px-2 py-4">
+          <nav className="flex-grow px-2 py-4 overflow-y-auto">
             <ul className="space-y-1">
               {navItems.map((item) => (
                 <li key={item.path}>
@@ -103,28 +132,53 @@ const Layout = () => {
             </ul>
           </nav>
           
-          {/* User and Settings Section */}
-          <div className="mt-auto px-2 py-4 border-t border-gray-200 dark:border-twitter-border">
-            <div className="flex items-center p-3 mb-3 rounded-full hover:bg-gray-100 dark:hover:bg-twitter-dark transition-colors">
-              <FaUser className="text-twitter-blue text-xl mr-4" />
-              <div>
-                <p className="font-medium text-twitter-lightText dark:text-twitter-darkText">X Account</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">@yourusername</p>
+          {/* User Section with profile from Firebase */}
+          <div className="px-2 py-4 border-t border-gray-200 dark:border-twitter-border mt-auto">
+            <div className="flex items-center p-3 rounded-full hover:bg-gray-100 dark:hover:bg-twitter-dark transition-colors">
+              {userProfile?.photoURL ? (
+                <img 
+                  src={userProfile.photoURL} 
+                  alt="Profile" 
+                  className="w-10 h-10 rounded-full mr-4"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-twitter-blue text-white flex items-center justify-center font-bold mr-4">
+                  {getUserInitials()}
+                </div>
+              )}
+              <div className="flex-grow">
+                <p className="font-medium text-twitter-lightText dark:text-twitter-darkText">
+                  {userProfile?.displayName || 'X Account'}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {userProfile?.email || '@yourusername'}
+                </p>
               </div>
             </div>
-            <ThemeToggle />
+            
+            {/* Logout button */}
+            <button
+              onClick={handleLogout}
+              className="w-full mt-2 flex items-center p-3 rounded-full hover:bg-gray-100 dark:hover:bg-twitter-dark transition-colors text-red-500"
+            >
+              <FaSignOutAlt className="mr-4" />
+              <span className="font-medium">Sign Out</span>
+            </button>
           </div>
         </div>
       </aside>
       
       {/* Main Content */}
-      <main className="content-wrapper flex-grow bg-gray-50 dark:bg-twitter-dark min-h-screen pt-16 md:pt-0 pb-16 md:pb-0">
+      <main className="content-wrapper flex-grow bg-gray-50 dark:bg-twitter-dark min-h-screen pt-16 md:pt-16 pb-20 md:pb-16">
         <div className="container mx-auto p-4 md:p-6 max-w-5xl">
           <Outlet />
         </div>
       </main>
       
-      {/* Mobile Bottom Navigation */}
+      {/* Footer - Only on desktop */}
+      <Footer />
+      
+      {/* Mobile Bottom Navigation - Always visible on mobile */}
       <MobileNavBar />
     </div>
   );

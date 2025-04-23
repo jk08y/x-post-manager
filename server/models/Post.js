@@ -31,7 +31,19 @@ class Post {
       });
 
       // Sort by scheduled time
-      return scheduledPosts.sort((a, b) => new Date(a.scheduledTime) - new Date(b.scheduledTime));
+      return scheduledPosts.sort((a, b) => {
+        // If neither has a scheduled time, sort by creation date
+        if (!a.scheduledTime && !b.scheduledTime) {
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        }
+        
+        // If only one has scheduled time, prioritize the scheduled one
+        if (a.scheduledTime && !b.scheduledTime) return -1;
+        if (!a.scheduledTime && b.scheduledTime) return 1;
+        
+        // Otherwise sort by scheduled time
+        return new Date(a.scheduledTime) - new Date(b.scheduledTime);
+      });
     } catch (error) {
       console.error('Error getting scheduled posts:', error);
       return [];
@@ -56,13 +68,21 @@ class Post {
       const filename = `${id}.json`;
       const filePath = path.join(this.directory, filename);
 
+      // Clean up the post data to ensure it has all needed fields
       const post = {
-        ...postData,
+        text: postData.text,
+        media: postData.media || [],
+        isThread: postData.isThread || false,
+        threadPosts: postData.threadPosts || [],
+        scheduledTime: postData.scheduledTime || null,
+        cronExpression: postData.cronExpression || null,
+        cronDescription: postData.cronDescription || null,
+        sent: false,
         createdAt: new Date().toISOString()
       };
 
       fs.writeFileSync(filePath, JSON.stringify(post, null, 2));
-      return { success: true, id, post };
+      return { success: true, id, post: { ...post, id } };
     } catch (error) {
       console.error('Error creating scheduled post:', error);
       return { success: false, error: error.message };
