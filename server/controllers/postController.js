@@ -12,7 +12,6 @@ async function uploadMedia(mediaFiles) {
     
     // Process each media file
     for (const mediaFile of mediaFiles) {
-      // In a real implementation, we would read the file from disk
       // This assumes mediaFile contains the path to the file on server
       const mediaId = await twitterClient.v1.uploadMedia(mediaFile.path);
       mediaIds.push(mediaId);
